@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <textarea id="transcript" rows="10" cols="50"></textarea>
+  <button onclick="saveCorrection()">修正を適用</button>
+  <div id="replacements"></div>
+
+<script>
+const speechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new speechRecognition();
+const replacements = new Map();
+
+// 音声認識設定
+recognition.lang = 'ja-JP';
+recognition.continuous = true;
+recognition.interimResults = true;
+
+// 音声認識処理
+recognition.onresult = (event) => {
+  const transcript = Array.from(event.results)
+    .map(result => result[0].transcript)
+    .join('');
+
+  document.getElementById('transcript').value =
+    applyReplacements(transcript);
+};
+
+// 文字列置換処理
+function applyReplacements(text) {
+  replacements.forEach((value, key) => {
+    text = text.replaceAll(key, value);
+  });
+  return text;
+}
+
+// 修正ルール保存
+function saveCorrection() {
+  const textarea = document.getElementById('transcript');
+  const selection = textarea.value.substring(
+    textarea.selectionStart,
+    textarea.selectionEnd
+  );
+
+  const corrected = prompt('修正後の文字列を入力', selection);
+  if (corrected) {
+    replacements.set(selection, corrected);
+    updateReplacementsDisplay();
+  }
+}
+
+// 修正ルール表示更新
+function updateReplacementsDisplay() {
+  const display = document.getElementById('replacements');
+  display.innerHTML = Array.from(replacements)
+    .map(([key, val]) => `"${key}" → "${val}"`)
+    .join('<br>');
+}
+
+recognition.start();
+</script>
+</body>
+</html>
